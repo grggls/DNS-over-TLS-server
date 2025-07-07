@@ -1,12 +1,154 @@
-# Challenge:
-A working example of a DNS to DNS-over-TLS proxy that can:
- 1. Handle at least one DNS query, and give a result to the client.
- 1. Work over TCP and talk to a DNS-over-TLS server that works over TCP (e.g: Cloudflare).
+# DNS-over-TLS Server
 
-# Deliverables:
-1. The source code.
-1. A [Dockerfile](Dockerfile), and the different options required to run your software.
-1. This README.md file
+A modern, production-ready DNS to DNS-over-TLS proxy server that provides secure DNS resolution.
+
+## Features
+
+- **Multiple Resolver Support**: Choose from `doh`, `curl`, `kdig`, or `ssock` resolvers
+- **Secure by Default**: TLS encryption for all DNS queries
+- **Production Ready**: Comprehensive testing, linting, and type checking
+- **Modern Python**: Built with Python 3.8+ and modern development practices
+- **Docker Support**: Containerized deployment with multiple build targets
+
+## Quick Start
+
+### Using Rye (Recommended)
+
+```bash
+# Install dependencies
+make install
+
+# Run tests
+make test
+
+# Start the server
+make script
+```
+
+### Using Docker
+
+```bash
+# Build and run with default resolver (ssock)
+make up
+
+# Build and run with specific resolver
+make run.curl
+make run.kdig
+make run.doh
+```
+
+## Development
+
+This project uses modern Python development practices:
+
+- **Rye**: Dependency and environment management
+- **pytest**: Testing framework
+- **Black**: Code formatting
+- **isort**: Import sorting
+- **mypy**: Type checking
+- **flake8**: Linting
+
+### Development Commands
+
+```bash
+# Install dependencies
+make install
+
+# Run tests
+make test
+
+# Run tests with coverage
+make test-cov
+
+# Format code
+make format
+
+# Run linting
+make lint
+
+# Type checking
+make type-check
+```
+
+## Project Structure
+
+```
+src/dns_over_tls_server/
+├── __init__.py          # Package initialization
+├── server.py           # Main server implementation
+├── resolvers.py        # DNS resolver implementations
+├── ssock.py           # SSL socket implementation
+└── cli.py             # Command-line interface
+
+tests/
+├── test_server.py     # Server unit tests
+└── test_resolvers.py  # Resolver unit tests
+```
+
+## Configuration
+
+The server supports the following configuration options:
+
+- `--port`: Listening port (default: 1053)
+- `--connections`: Maximum concurrent connections (default: 1)
+- `--stub`: Resolver to use (`doh`, `curl`, `kdig`, `ssock`) (default: `doh`)
+- `--host`: Host to bind to (default: `0.0.0.0`)
+- `--verbose`: Enable verbose logging
+
+## Resolvers
+
+### doh
+Uses the `doh` tool for DNS-over-HTTPS resolution.
+
+### curl
+Uses `curl` with Cloudflare's DNS-over-HTTPS service.
+
+### kdig
+Uses `kdig` with TLS for DNS resolution.
+
+### ssock
+Uses a custom SSL socket implementation for DNS-over-TLS.
+
+## Security
+
+This service addresses DNS security concerns by:
+
+- Providing TLS encryption for DNS queries
+- Preventing DNS reflection attacks
+- Implementing defensive connection handling
+- Running with minimal privileges in Docker
+
+## Deployment
+
+### Docker
+
+The project includes multiple Docker build targets for different resolvers:
+
+```bash
+# Build with default resolver
+docker build --tag dns-over-tls-server .
+
+# Build with specific resolver
+docker build --build-arg STUB=curl --tag dns-over-tls-server .
+```
+
+### Kubernetes
+
+This service is designed to work as a sidecar container in Kubernetes pods, following the Ambassador pattern.
+
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Add tests for new functionality
+5. Ensure all tests pass: `make test`
+6. Format your code: `make format`
+7. Submit a pull request
+
+## License
+
+MIT License
 
 ## Implementation Details:
 We like to start a software project with a couple of niceties:

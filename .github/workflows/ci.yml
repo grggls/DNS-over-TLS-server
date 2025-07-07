@@ -2,11 +2,53 @@ name: CI
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [ main, develop, 'feature/*', 'refactor/*', 'modernize/*' ]
   pull_request:
     branches: [ main, develop ]
+  workflow_dispatch:  # Allow manual triggering
 
 jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: "3.11"
+
+    - name: Install Rye
+      run: |
+        curl -sSf https://rye-up.com/get | bash
+        echo "$HOME/.rye/shims" >> $GITHUB_PATH
+
+    - name: Install dependencies
+      run: rye sync
+
+    - name: Lint YAML files
+      run: |
+        pip install yamllint
+        yamllint .github/ *.yml *.yaml
+
+    - name: Lint GitHub Actions workflows
+      run: |
+        curl -sSfL https://raw.githubusercontent.com/rhysd/actionlint/main/scripts/install-actionlint.bash | bash -s
+        actionlint
+
+    - name: Lint Python code
+      run: |
+        rye run black --check src/ tests/
+        rye run isort --check-only src/ tests/
+        rye run flake8 src/ tests/
+
+    - name: Security linting
+      run: |
+        rye run pip install bandit safety
+        rye run bandit -r src/ -f json -o bandit-report.json || true
+        rye run safety check --json --output safety-report.json || true
+        echo "Security scans completed"
+
   test:
     runs-on: ubuntu-latest
     strategy:
@@ -22,7 +64,9 @@ jobs:
         python-version: ${{ matrix.python-version }}
 
     - name: Install Rye
-      uses: actions/setup-rye@v1
+      run: |
+        curl -sSf https://rye-up.com/get | bash
+        echo "$HOME/.rye/shims" >> $GITHUB_PATH
 
     - name: Install dependencies
       run: rye sync
@@ -30,20 +74,12 @@ jobs:
     - name: Run tests
       run: rye run pytest
 
-    - name: Run linting
-      run: rye run flake8 src/ tests/
-
     - name: Run type checking
       run: rye run mypy src/
 
-    - name: Run formatting check
-      run: |
-        rye run black --check src/ tests/
-        rye run isort --check-only src/ tests/
-
   docker:
     runs-on: ubuntu-latest
-    needs: test
+    needs: [lint, test]
 
     steps:
     - uses: actions/checkout@v4

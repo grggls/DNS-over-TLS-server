@@ -10,6 +10,8 @@ on:
 jobs:
   lint:
     runs-on: ubuntu-latest
+    env:
+      PATH: ${{ env.HOME }}/.rye/shims:${{ env.PATH }}
     steps:
     - uses: actions/checkout@v4
 
@@ -22,6 +24,8 @@ jobs:
       run: |
         curl -sSf https://rye-up.com/get | bash
         echo "$HOME/.rye/shims" >> $GITHUB_PATH
+        export PATH="$HOME/.rye/shims:$PATH"
+        rye --version
 
     - name: Install dependencies
       run: rye sync
@@ -54,7 +58,8 @@ jobs:
     strategy:
       matrix:
         python-version: ["3.8", "3.9", "3.10", "3.11", "3.12"]
-
+    env:
+      PATH: ${{ env.HOME }}/.rye/shims:${{ env.PATH }}
     steps:
     - uses: actions/checkout@v4
 
@@ -67,6 +72,8 @@ jobs:
       run: |
         curl -sSf https://rye-up.com/get | bash
         echo "$HOME/.rye/shims" >> $GITHUB_PATH
+        export PATH="$HOME/.rye/shims:$PATH"
+        rye --version
 
     - name: Install dependencies
       run: rye sync

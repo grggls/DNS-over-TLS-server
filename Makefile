@@ -8,10 +8,33 @@ NAME=dnstlsproxy
 TAG=dns2dnstlsproxy
 
 #___config___
-.DEFAULT_GOAL := up
+.DEFAULT_GOAL := test
 
 #___targets___
 
+# Development targets
+install:  # Install dependencies with Rye
+	rye sync
+
+test: install  # Run tests
+	rye run pytest
+
+test-cov: install  # Run tests with coverage
+	rye run pytest --cov=dns_over_tls_server --cov-report=html
+
+lint: install  # Run linting
+	rye run black src/ tests/
+	rye run isort src/ tests/
+	rye run flake8 src/ tests/
+
+format: install  # Format code
+	rye run black src/ tests/
+	rye run isort src/ tests/
+
+type-check: install  # Run type checking
+	rye run mypy src/
+
+# Legacy targets
 unprepare:
 	brew uninstall --force $(BREW_DEPS)
 
@@ -36,8 +59,8 @@ build.kdig:
 build.ssock:
 	docker build --build-arg STUB=ssock --tag $(TAG) .
 
-script:
-	python3 dnstotls_server.py --port 8053 --connections 3
+script: install
+	rye run dns-over-tls-server --port 8053 --connections 3
 
 run: build rm
 	docker run --name dnstlsproxy -p 8053:8053/tcp $(TAG)
